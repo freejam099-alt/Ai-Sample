@@ -89,7 +89,7 @@ jobs:
       - name: Build release APK
         run: |
           set -o pipefail
-          ./gradlew :app:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+          ./gradlew :app:assembleRelease --no-daemon --continue --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
 
       - name: Report build errors
         if: failure()
