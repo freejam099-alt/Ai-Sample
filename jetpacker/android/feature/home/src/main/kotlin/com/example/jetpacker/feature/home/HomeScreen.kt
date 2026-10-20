@@ -56,6 +56,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Warning
@@ -142,6 +143,7 @@ fun HomeScreen(
   onTripCreated: (String) -> Unit = {},
   onNavigateToDebug: () -> Unit = {},
   onCreateTripClick: () -> Unit = {},
+  onOpenAiSamples: () -> Unit = {},
   viewModel: HomeViewModel = hiltViewModel(),
   createTripViewModel: CreateTripViewModel = hiltViewModel(),
 ) {
@@ -192,11 +194,21 @@ fun HomeScreen(
               .padding(vertical = 16.dp, horizontal = 24.dp),
           contentAlignment = if (foldableBreakpoint) Alignment.CenterEnd else Alignment.Center,
         ) {
-          JetPackerExtendedFloatingActionButton(
-            icon = Icons.Rounded.Add,
-            label = "Create trip",
-            onClick = onCreateTripClick,
-          )
+          Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            JetPackerExtendedFloatingActionButton(
+              icon = Icons.Rounded.Star,
+              label = "AI Samples",
+              onClick = onOpenAiSamples,
+            )
+            JetPackerExtendedFloatingActionButton(
+              icon = Icons.Rounded.Add,
+              label = "Create trip",
+              onClick = onCreateTripClick,
+            )
+          }
         }
       }
     },

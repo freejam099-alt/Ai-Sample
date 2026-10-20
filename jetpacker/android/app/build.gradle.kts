@@ -121,6 +121,7 @@ dependencies {
   implementation(project(":feature:detail:hotel_chat"))
   implementation(project(":feature:detail:review"))
   implementation(project(":feature:home"))
+  implementation(project(":catalog-app"))
   implementation(project(":feature:trip"))
   implementation(project(":feature:trip:itinerary"))
   implementation(libs.accompanist.permissions)

@@ -15,16 +15,15 @@
  */
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.hilt.plugin)
-    alias(libs.plugins.jetbrains.kotlin.serialization)
+    alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "com.android.ai.samples.geminivideometadatacreation"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         minSdk = 24
@@ -44,16 +43,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
     }
 }
 
+kotlin { jvmToolchain(17) }
+
 dependencies {
-    implementation(project(":ui-component"))
+    implementation(project(":catalog-ui-component"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)

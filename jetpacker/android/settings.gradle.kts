@@ -75,3 +75,14 @@ include(":feature:trip:voice_notes")
 include(":feature:trip:itinerary:enrichment")
 include(":feature:appfunctions")
 include(":feature:trip:booking_assistant")
+
+// --- AI Sample Catalog, merged into this app (flat project names, sources stay in ../../ai-sample-catalog) ---
+val catalogDir = file("../../ai-sample-catalog")
+include(":catalog-ui-component")
+project(":catalog-ui-component").projectDir = File(catalogDir, "ui-component")
+include(":catalog-app")
+project(":catalog-app").projectDir = File(catalogDir, "app")
+listOf("gemini-chatbot", "gemini-image-chat", "gemini-live-todo", "gemini-multimodal", "gemini-video-metadata-creation", "gemini-video-summarization", "magic-selfie", "nanobanana").forEach { name ->
+  include(":catalog-$name")
+  project(":catalog-$name").projectDir = File(catalogDir, "samples/$name")
+}

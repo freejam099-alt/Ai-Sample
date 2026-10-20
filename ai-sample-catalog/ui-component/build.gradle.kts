@@ -15,13 +15,12 @@
  */
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.android.ai.uicomponent"
-    compileSdk = 35
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     buildFeatures {
         compose = true
@@ -47,10 +46,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 }
+
+kotlin { jvmToolchain(17) }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
@@ -62,7 +60,7 @@ dependencies {
     implementation(libs.androidx.ui.google.fonts)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui.compose)
-    implementation(libs.coil.compose)
+    implementation(libs.coil3.compose)
     implementation(libs.richtext.material3)
     implementation(libs.richtext.commonmark)
     implementation(libs.ui.tooling.preview)

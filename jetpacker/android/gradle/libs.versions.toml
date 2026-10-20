@@ -1,4 +1,22 @@
 [versions]
+# --- merged from AI Sample Catalog ---
+cat-appcompat = "1.7.0"
+cat-exifinterface = "1.4.1"
+cat-lifecycleViewmodelAndroid = "2.8.7"
+cat-material3 = "1.5.0-alpha01"
+cat-material3WindowSizeClass = "1.3.2"
+cat-media3 = "1.8.0"
+cat-navigationCompose = "2.9.0"
+cat-navigationRuntimeKtx = "2.9.0"
+cat-runtimeLivedata = "1.7.6"
+cat-uiTextGoogleFonts = "1.8.1"
+cat-uiToolingPreviewAndroid = "1.8.1"
+cat-firebaseCommonKtx = "21.0.0"
+cat-hiltNavigationCompose = "1.2.0"
+cat-kotlinxCoroutinesGuava = "1.10.2"
+cat-richtext = "1.0.0-alpha02"
+cat-uiTooling = "1.8.3"
+cat-uiToolingPreview = "1.8.3"
 a2ui = "1.0.0-SNAPSHOT"
 accompanistPermissions = "0.37.3"
 activityCompose = "1.13.0"
@@ -54,6 +72,36 @@ versionName = "1.0"
 appfunctions = "1.0.0-alpha10"
 
 [libraries]
+# --- merged from AI Sample Catalog ---
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "cat-appcompat" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "cat-exifinterface" }
+androidx-lifecycle-viewmodel-android = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-android", version.ref = "cat-lifecycleViewmodelAndroid" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "cat-material3" }
+androidx-material3-window = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "cat-material3WindowSizeClass" }
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "cat-media3" }
+androidx-media3-transformer = { module = "androidx.media3:media3-transformer", version.ref = "cat-media3" }
+androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "cat-media3" }
+androidx-media3-ui-compose = { module = "androidx.media3:media3-ui-compose", version.ref = "cat-media3" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "cat-navigationCompose" }
+androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "cat-navigationRuntimeKtx" }
+androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "cat-runtimeLivedata" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "cat-uiTextGoogleFonts" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "cat-uiToolingPreviewAndroid" }
+firebase-common-ktx = { group = "com.google.firebase", name = "firebase-common-ktx", version.ref = "cat-firebaseCommonKtx" }
+hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "cat-hiltNavigationCompose" }
+kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "cat-kotlinxCoroutinesGuava" }
+richtext-commonmark = { group = "com.halilibo.compose-richtext", name = "richtext-commonmark", version.ref = "cat-richtext" }
+richtext-material3 = { group = "com.halilibo.compose-richtext", name = "richtext-ui-material3", version.ref = "cat-richtext" }
+ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "cat-uiTooling" }
+ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "cat-uiToolingPreview" }
+coil3-compose = { module = "io.coil-kt.coil3:coil-compose", version = "3.1.0" }
 androidx-a2ui-model = { group = "androidx.a2ui", name = "a2ui-model", version.ref = "a2ui" }
 androidx-a2ui-compose-runtime = { group = "androidx.a2ui.compose", name = "compose-runtime", version.ref = "a2ui" }
 androidx-a2ui-compose-ui = { group = "androidx.a2ui.compose", name = "compose-ui", version.ref = "a2ui" }

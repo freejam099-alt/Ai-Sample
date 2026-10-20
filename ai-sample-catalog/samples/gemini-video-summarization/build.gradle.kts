@@ -15,15 +15,14 @@
  */
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.hilt.plugin)
+    alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
     namespace = "com.google.com.android.ai.samples.geminivideosummary"
-    compileSdk = 35
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         minSdk = 24
@@ -43,13 +42,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
     }
 }
+
+kotlin { jvmToolchain(17) }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
@@ -71,7 +69,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
 
-    implementation(project(":ui-component"))
+    implementation(project(":catalog-ui-component"))
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

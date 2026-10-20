@@ -16,6 +16,8 @@
 
 package com.example.jetpacker.ui.navigation
 
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -111,11 +113,18 @@ fun JetPackerNavGraph(
         )
       }
       entry<Screen.MyTrips> {
+        val context = LocalContext.current
         HomeScreen(
           onTripClick = { tripId -> navigator.navigate(Screen.Timeline(tripId)) },
           onTripCreated = { tripId -> navigator.navigate(Screen.Timeline(tripId)) },
           onNavigateToDebug = { navigator.navigate(Screen.Debug) },
           onCreateTripClick = { navigator.navigate(Screen.CreateTrip) },
+          onOpenAiSamples = {
+            // The AI Sample Catalog is merged into this app as a library module.
+            context.startActivity(
+              Intent().setClassName(context.packageName, "com.android.ai.catalog.MainActivity")
+            )
+          },
         )
       }
       entry<Screen.RestaurantDetail> { key ->

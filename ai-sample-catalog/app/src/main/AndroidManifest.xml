@@ -1,31 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
-    <application
-        android:allowBackup="true"
-        android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.AISampleCatalog"
-        tools:targetApi="31"
-        android:name=".CatalogApplication"
-        android:enableOnBackInvokedCallback="true"
-        >
+    <application>
+        <!-- Opened from the JetPacker home screen; not a launcher entry. -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
+            android:name="com.android.ai.catalog.MainActivity"
+            android:exported="false"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.AISampleCatalog">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:theme="@style/Theme.AISampleCatalog" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -36,5 +20,4 @@
                 android:resource="@xml/provider_paths" />
         </provider>
     </application>
-
 </manifest>

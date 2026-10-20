@@ -16,14 +16,13 @@
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.android.ai.samples.geminiimagechat"
-    compileSdk = 35
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     buildFeatures {
         compose = true
@@ -49,10 +48,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 }
+
+kotlin { jvmToolchain(17) }
 
 dependencies {
 
@@ -66,12 +64,12 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.material3)
-    implementation(libs.coil.compose)
+    implementation(libs.coil3.compose)
     implementation(libs.androidx.exifinterface)
     ksp(libs.hilt.compiler)
     implementation(libs.ui.tooling.preview)
 
-    implementation(project(":ui-component"))
+    implementation(project(":catalog-ui-component"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

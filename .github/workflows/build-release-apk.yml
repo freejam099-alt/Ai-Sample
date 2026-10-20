@@ -14,18 +14,12 @@ concurrency:
 
 jobs:
   build:
-    name: Build ${{ matrix.app.name }}
+    name: Build AiSample (JetPacker + AI Catalog)
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        app:
-          - { name: jetpacker, dir: jetpacker/android }
-          - { name: ai-sample-catalog, dir: ai-sample-catalog }
     defaults:
       run:
-        working-directory: ${{ matrix.app.dir }}
+        working-directory: jetpacker/android
     env:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4g
     steps:
@@ -101,14 +95,14 @@ jobs:
           } > "$RUNNER_TEMP/err.txt"
           MSG="$(cat "$RUNNER_TEMP/err.txt")"
           MSG="${MSG//'%'/'%25'}"; MSG="${MSG//$'\r'/'%0D'}"; MSG="${MSG//$'\n'/'%0A'}"
-          echo "::error title=Build failed (${{ matrix.app.name }})::$MSG"
+          echo "::error title=Build failed (AiSample)::$MSG"
 
       - name: Collect arm64 APK
         run: |
           APK="$(find app/build/outputs/apk/release -name '*.apk' | head -1)"
           test -n "$APK"
           mkdir -p "$GITHUB_WORKSPACE/dist"
-          OUT="$GITHUB_WORKSPACE/dist/${{ matrix.app.name }}-arm64-v8a-release.apk"
+          OUT="$GITHUB_WORKSPACE/dist/AiSample-arm64-v8a-release.apk"
           cp "$APK" "$OUT"
           echo "Native libraries in the APK:"
           unzip -l "$OUT" | grep "lib/" || echo "  (none)"
@@ -121,7 +115,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.app.name }}-arm64-v8a-release
+          name: AiSample-arm64-v8a-release
           path: dist/*.apk
           if-no-files-found: error
 
