@@ -16,6 +16,10 @@
 
 package com.example.jetpacker.feature.voice_notes
 
+import com.google.firebase.Firebase
+import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.GenerativeBackend
+import kotlinx.coroutines.CancellationException
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
@@ -26,15 +30,6 @@ import com.example.jetpacker.core.speech.VoiceInputManager
 import com.example.jetpacker.data.itinerary.EventDao
 import com.example.jetpacker.data.itinerary.TimelineEvent
 import com.example.jetpacker.data.itinerary.VoiceNoteEntity
-import com.google.mlkit.genai.common.GenAiException
-import com.google.mlkit.genai.prompt.Generation
-import com.google.mlkit.genai.prompt.GenerativeModel
-import com.google.mlkit.genai.prompt.ModelPreference
-import com.google.mlkit.genai.prompt.ModelReleaseStage
-import com.google.mlkit.genai.prompt.TextPart
-import com.google.mlkit.genai.prompt.generateContentRequest
-import com.google.mlkit.genai.prompt.generationConfig
-import com.google.mlkit.genai.prompt.modelConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.util.UUID
@@ -85,21 +80,15 @@ constructor(
 
   val processingNotes = mutableStateListOf<VoiceNotePlaceholder>()
 
-  // Visible for testing
-  internal var generativeModelTesting: GenerativeModel? = null
+  // Visible for testing: replaces the cloud model call with a fake.
+  internal var generateTextForTesting: (suspend (prompt: String) -> String)? = null
 
   private val generativeModel by lazy {
-    generativeModelTesting
-      ?: run {
-        val previewFastConfig = generationConfig {
-          modelConfig = modelConfig {
-            releaseStage = ModelReleaseStage.PREVIEW
-            preference = ModelPreference.FAST
-          }
-        }
-        Generation.getClient(previewFastConfig)
-      }
+    Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel("gemini-3.5-flash-lite")
   }
+
+  private suspend fun generateText(prompt: String): String =
+    generateTextForTesting?.invoke(prompt) ?: (generativeModel.generateContent(prompt).text?.trim() ?: "")
 
   suspend fun insertVoiceNote(note: VoiceNoteEntity) {
     eventDao.insertVoiceNote(note)
@@ -145,8 +134,7 @@ constructor(
       withContext(Dispatchers.Main.immediate) {
         try {
           delay(150)
-          val status = generativeModel.checkStatus()
-          if (status == 3) { // 3 is AVAILABLE
+          run {
             // TODO: Refactor to use real current date/time instead of hardcoded May 20 12PM
             val ioBaseTime = Instant.parse("2026-05-17T00:00:00Z").toEpochMilli()
             val dayMillis = 24 * 3600 * 1000L
@@ -179,24 +167,19 @@ constructor(
 
             while (attempts < maxAttempts) {
               try {
-                val request = generateContentRequest(TextPart(prompt)) {}
-                val response = generativeModel.generateContent(request)
-                responseText = response.candidates.firstOrNull()?.text?.trim() ?: ""
+                responseText = generateText(prompt)
                 break
-              } catch (e: GenAiException) {
-                if (e.errorCode == 9) { // 9 is ErrorCode.BUSY
-                  attempts++
-                  if (attempts >= maxAttempts) {
-                    throw e
-                  }
-                  println(
-                    "AICore is busy (ErrorCode 9), retrying in ${currentDelay}ms... (Attempt $attempts/$maxAttempts)"
-                  )
-                  delay(currentDelay)
-                  currentDelay *= 2
-                } else {
+              } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                attempts++
+                if (attempts >= maxAttempts) {
                   throw e
                 }
+                println(
+                  "Cloud model request failed (${e.message}), retrying in ${currentDelay}ms... (Attempt $attempts/$maxAttempts)"
+                )
+                delay(currentDelay)
+                currentDelay *= 2
               }
             }
 
@@ -230,8 +213,6 @@ constructor(
                 matchingEventsJson = matchesArray?.toString() ?: "",
               )
             )
-          } else {
-            throw Exception("LLM Model not available (status $status)")
           }
         } catch (e: Exception) {
           println("Voice note processing failed: ${e.message}")

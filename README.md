@@ -1,6 +1,6 @@
 # Android AI Samples Repository
 
-Welcome to the official repository for Android Artificial Intelligence (AI) sample applications and developer tools. This repository contains various self-contained samples and modules illustrating how to leverage Generative AI capabilities on Android, utilizing both on-device and cloud-based models.
+Welcome to the official repository for Android Artificial Intelligence (AI) sample applications and developer tools. This repository contains various self-contained samples and modules illustrating how to leverage Generative AI capabilities on Android, using cloud-based Gemini models through Firebase AI Logic.
 
 ---
 
@@ -10,8 +10,8 @@ The table below catalogs the samples and applications available in this reposito
 
 | Sample App | Description | Directory |
 | :--- | :--- | :--- |
-| **Android AI Sample Catalog** <br><br> ![Android AI Sample Catalog](https://developer.android.com/static/ai/assets/images/ai_catalog_screenshot_1440.png) | A standalone showcase application containing multiple standalone, self-contained samples demonstrating various Gemini integration capabilities (hybrid inference, chat, multimodal, summarization, writing assistance, etc.) on Android. | [ai-sample-catalog/](ai-sample-catalog/) |
-| **Jetpacker** <br><br> ![Jetpacker Home Screen](jetpacker/screenshots/home.png) | A complete travel planner application leveraging on-device ML Kit AI (for summaries, speech transcription, expense receipt parsing, translation fallback) and cloud-based Firebase AI logic to manage trips, itinerary events, reviews, and bookings. | [jetpacker/](jetpacker/) |
+| **Android AI Sample Catalog** <br><br> ![Android AI Sample Catalog](https://developer.android.com/static/ai/assets/images/ai_catalog_screenshot_1440.png) | A standalone showcase application containing multiple standalone, self-contained samples demonstrating various Gemini integration capabilities (chat, multimodal, image generation, video, Live API, etc.) on Android. | [ai-sample-catalog/](ai-sample-catalog/) |
+| **Jetpacker** <br><br> ![Jetpacker Home Screen](jetpacker/screenshots/home.png) | A complete travel planner application leveraging cloud-based Firebase AI Logic (Gemini) for summaries, speech transcription, expense receipt parsing and translation, to manage trips, itinerary events, reviews, and bookings. | [jetpacker/](jetpacker/) |
 
 ---
 

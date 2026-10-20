@@ -38,9 +38,8 @@ dependencies {
   "ksp"(libs.hilt.compiler)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.kotlinx.coroutines.android)
-  implementation(libs.kotlinx.coroutines.play.services)
-  implementation(libs.mlkit.genai.speech)
-  implementation(libs.mlkit.translate)
+  implementation(platform(libs.firebase.bom))
+  implementation(libs.firebase.ai)
   implementation(project(":core:flags"))
 
   testImplementation(libs.junit)

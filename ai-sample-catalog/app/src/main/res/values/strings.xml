@@ -4,12 +4,6 @@
     <string name="gemini_multimodal_sample_list_description">A very simple example of multimodal generation using the Gemini Flash model.</string>
     <string name="gemini_chatbot_sample_title">Gemini Chatbot</string>
     <string name="gemini_chatbot_sample_description">A simple implementation of chatbot using Gemini Flash model.</string>
-    <string name="genai_summarization_sample_list_title">Summarization with Gemini Nano</string>
-    <string name="genai_summarization_sample_list_description">Summarize articles and conversations on-device with GenAI API powered by Gemini Nano</string>
-    <string name="genai_image_description_sample_list_title">Image Description with Gemini Nano</string>
-    <string name="genai_image_description_sample_list_description">Generate short descriptions of images on-device with GenAI API powered by Gemini Nano</string>
-    <string name="genai_writing_assistance_sample_list_title">Polish text with Gemini Nano</string>
-    <string name="genai_writing_assistance_sample_list_description">Proofread and rewrite short content on-device with GenAI API powered by Gemini Nano</string>
     <string name="top_bar_title">Android AI Samples</string>
     <string name="top_bar_title_expanded">Android\nAI Samples</string>
     <string name="open_sample_button">Open sample</string>
@@ -25,8 +19,6 @@
     <string name="gemini_live_todo_list_description">"Simple to-do app using the Gemini Live API to interact with the items in the list"</string>
     <string name="gemini_image_chat_list_title">Chat with Nano Banana Pro</string>
     <string name="gemini_image_chat_list_description">Conversational Image generation with Gemini 3 Pro Image</string>
-    <string name="gemini_hybrid_sample_list_title">Gemini Hybrid</string>
-    <string name="gemini_hybrid_sample_list_description">Inference with Firebase Hybrid SDK using either Gemini Nano on-device or Gemini Flash in the Cloud.</string>
     <string name="firebase_required">Firebase Required</string>
     <string name="firebase_required_description">This sample needs a Firebase project with Firebase AI Logic enabled. Add google-services.json, enable the Firebase AI Logic API, and include that API in this app\'s Android API key restrictions.</string>
     <string name="billing_required_note">Image generation models such as Nano Banana typically require a billed Firebase project (Blaze plan).</string>

@@ -57,18 +57,13 @@ dependencies {
   implementation(libs.androidx.hilt.navigation.compose)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
-  implementation(libs.mlkit.genai.prompt)
-  implementation(libs.mlkit.genai.speech)
-  implementation(libs.mlkit.translate)
   implementation(libs.hilt.android)
   "ksp"(libs.hilt.compiler)
 
   debugImplementation(libs.androidx.compose.ui.tooling)
 
-  implementation(libs.mlkit.language.id)
   implementation(platform(libs.firebase.bom))
   implementation(libs.firebase.ai)
-  implementation(libs.firebase.ai.ondevice)
   implementation(libs.firebase.auth.ktx)
   implementation(libs.firebase.firestore)
 

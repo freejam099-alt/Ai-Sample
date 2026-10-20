@@ -16,50 +16,24 @@
 
 package com.example.jetpacker.feature.expenses
 
+import kotlinx.coroutines.CancellationException
+import com.google.firebase.Firebase
+import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.GenerativeBackend
+import com.google.firebase.ai.type.content
 import android.graphics.Bitmap
 import android.util.Log
-import com.google.mlkit.genai.common.GenAiException
-import com.google.mlkit.genai.prompt.Generation
-import com.google.mlkit.genai.prompt.ImagePart
-import com.google.mlkit.genai.prompt.ModelPreference
-import com.google.mlkit.genai.prompt.ModelReleaseStage
-import com.google.mlkit.genai.prompt.TextPart
-import com.google.mlkit.genai.prompt.generateContentRequest
-import com.google.mlkit.genai.prompt.generationConfig
-import com.google.mlkit.genai.prompt.modelConfig
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ReceiptParserImpl @Inject constructor() : ReceiptParser {
   private val generativeModel by lazy {
-    val previewFastConfig = generationConfig {
-      modelConfig = modelConfig {
-        releaseStage = ModelReleaseStage.PREVIEW
-        preference = ModelPreference.FULL
-      }
-    }
-    Generation.getClient(previewFastConfig)
+    Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel("gemini-3.5-flash-lite")
   }
 
-  override suspend fun isSupported(): Boolean {
-    return try {
-      var status = generativeModel.checkStatus()
-      if (status == 1) { // 1 is DOWNLOADABLE
-        Log.d("ReceiptParser", "Model is downloadable. Triggering download...")
-        generativeModel.download().collect { Log.d("ReceiptParser", "Downloading progress...") }
-        status = generativeModel.checkStatus()
-      }
-      status == 3 // 3 is AVAILABLE
-    } catch (e: GenAiException) {
-      if (e.errorCode == 606) {
-        Log.w("ReceiptParser", "Feature not found, disabling.", e)
-        false
-      } else {
-        throw e
-      }
-    }
-  }
+  // Receipt parsing always runs on a cloud Gemini model, so it is supported on every device.
+  override suspend fun isSupported(): Boolean = true
 
   override suspend fun parseReceipt(bitmap: Bitmap): String {
     val prompt =
@@ -72,16 +46,19 @@ class ReceiptParserImpl @Inject constructor() : ReceiptParser {
         "4. category: Type of expense, whether it's travel, food, activity, shopping, entertainment, or other " +
         "The JSON should follow this structure: {\"title\": \"...\", \"amount\": 0.0, \"currency\": \"...\", \"category\": \"...\"}"
 
-    val request = generateContentRequest(ImagePart(bitmap), TextPart(prompt)) {}
-
     var fullResponse = ""
     try {
-      generativeModel.generateContentStream(request).collect { response ->
-        val text = response.candidates.firstOrNull()?.text ?: ""
-        fullResponse += text
-      }
+      val response =
+        generativeModel.generateContent(
+          content {
+            image(bitmap)
+            text(prompt)
+          }
+        )
+      fullResponse = response.text ?: ""
     } catch (e: Exception) {
-      Log.e("ReceiptParser", "Error using GenAI Prompt API", e)
+      if (e is CancellationException) throw e
+      Log.e("ReceiptParser", "Error using cloud Gemini model", e)
     }
     return fullResponse
   }

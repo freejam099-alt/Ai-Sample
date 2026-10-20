@@ -36,24 +36,33 @@ class JetPackerApplication : Application() {
     ComposeUiFlags.isMediaQueryIntegrationEnabled = true
     super.onCreate()
     FeatureFlags.initialize(this)
-    try {
-      if (Firebase.initialize(context = this) != null) {
-        Firebase.appCheck.installAppCheckProviderFactory(
-          DebugAppCheckProviderFactory.getInstance(),
-        )
-        Firebase.auth.signInAnonymously()
-          .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-              Log.d("JetPackerApplication", "Anonymous auth successful")
-            } else {
-              Log.w("JetPackerApplication", "Anonymous auth failed", task.exception)
-            }
-          }
-      } else {
-        Log.w("JetPackerApplication", "Firebase not initialized")
-      }
-    } catch (e: Exception) {
-      Log.w("JetPackerApplication", "Firebase initialization error", e)
+    // Firebase setup must never crash app start-up (e.g. missing/mock google-services.json,
+    // no network, or Play services problems). Every step is isolated and only logged on failure.
+    val firebaseReady =
+      runCatching { Firebase.initialize(context = this) != null }
+        .onFailure { Log.w(TAG, "Firebase initialization error", it) }
+        .getOrDefault(false)
+    if (!firebaseReady) {
+      Log.w(TAG, "Firebase not initialized")
+      return
     }
+    runCatching {
+        Firebase.appCheck.installAppCheckProviderFactory(DebugAppCheckProviderFactory.getInstance())
+      }
+      .onFailure { Log.w(TAG, "App Check setup failed", it) }
+    runCatching {
+        Firebase.auth.signInAnonymously().addOnCompleteListener { task ->
+          if (task.isSuccessful) {
+            Log.d(TAG, "Anonymous auth successful")
+          } else {
+            Log.w(TAG, "Anonymous auth failed", task.exception)
+          }
+        }
+      }
+      .onFailure { Log.w(TAG, "Anonymous auth setup failed", it) }
+  }
+
+  private companion object {
+    const val TAG = "JetPackerApplication"
   }
 }

@@ -16,7 +16,13 @@
 
 <resources>
     <style name="Theme.JetPacker" parent="Theme.MaterialComponents.Light">
-        <item name="windowSplashScreenBackground">@color/window_background</item>
         <item name="android:windowBackground">@color/window_background</item>
+    </style>
+
+    <!-- Shown by the system splash screen; switches to Theme.JetPacker once the app is ready. -->
+    <style name="Theme.JetPacker.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.JetPacker</item>
     </style>
 </resources>

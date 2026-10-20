@@ -23,15 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.android.ai.catalog.R
 import com.android.ai.samples.geminichatbot.GeminiChatbotScreen
-import com.android.ai.samples.geminihybrid.GeminiHybridScreen
 import com.android.ai.samples.geminiimagechat.GeminiImageChatScreen
 import com.android.ai.samples.geminilivetodo.ui.TodoScreen
 import com.android.ai.samples.geminimultimodal.ui.GeminiMultimodalScreen
 import com.android.ai.samples.geminivideometadatacreation.ui.VideoMetadataCreationScreen
 import com.android.ai.samples.geminivideosummary.ui.VideoSummarizationScreen
-import com.android.ai.samples.genai_image_description.GenAIImageDescriptionScreen
-import com.android.ai.samples.genai_summarization.GenAISummarizationScreen
-import com.android.ai.samples.genai_writing_assistance.GenAIWritingAssistanceScreen
 import com.android.ai.samples.magicselfie.ui.MagicSelfieScreen
 import com.android.ai.samples.nanobanana.ui.NanobananaScreen
 import com.android.ai.theme.extendedColorScheme
@@ -40,16 +36,6 @@ import com.google.firebase.ai.type.PublicPreviewAPI
 @OptIn(PublicPreviewAPI::class)
 @RequiresPermission(Manifest.permission.RECORD_AUDIO)
 val sampleCatalog = listOf(
-    SampleCatalogItem(
-        title = R.string.gemini_hybrid_sample_list_title,
-        description = R.string.gemini_hybrid_sample_list_description,
-        route = "GeminiHybridScreen",
-        sampleEntryScreen = { GeminiHybridScreen() },
-        tags = listOf(SampleTags.GEMINI_NANO, SampleTags.GEMINI_FLASH, SampleTags.ML_KIT, SampleTags.FIREBASE),
-        needsFirebase = true,
-        keyArt = R.drawable.img_keyart_text,
-        isFeatured = true,
-    ),
     SampleCatalogItem(
         title = R.string.gemini_image_chat_list_title,
         description = R.string.gemini_image_chat_list_description,
@@ -79,30 +65,6 @@ val sampleCatalog = listOf(
         tags = listOf(SampleTags.GEMINI_FLASH, SampleTags.FIREBASE),
         needsFirebase = true,
         keyArt = R.drawable.img_keyart_chatbot,
-    ),
-    SampleCatalogItem(
-        title = R.string.genai_summarization_sample_list_title,
-        description = R.string.genai_summarization_sample_list_description,
-        route = "GenAISummarizationScreen",
-        sampleEntryScreen = { GenAISummarizationScreen() },
-        tags = listOf(SampleTags.GEMINI_NANO, SampleTags.ML_KIT),
-        keyArt = R.drawable.img_keyart_summary,
-    ),
-    SampleCatalogItem(
-        title = R.string.genai_image_description_sample_list_title,
-        description = R.string.genai_image_description_sample_list_description,
-        route = "GenAIImageDescriptionScreen",
-        sampleEntryScreen = { GenAIImageDescriptionScreen() },
-        tags = listOf(SampleTags.GEMINI_NANO, SampleTags.ML_KIT),
-        keyArt = R.drawable.img_keyart_img_desc,
-    ),
-    SampleCatalogItem(
-        title = R.string.genai_writing_assistance_sample_list_title,
-        description = R.string.genai_writing_assistance_sample_list_description,
-        route = "GenAIWritingAssistanceScreen",
-        sampleEntryScreen = { GenAIWritingAssistanceScreen() },
-        tags = listOf(SampleTags.GEMINI_NANO, SampleTags.ML_KIT),
-        keyArt = R.drawable.img_keyart_text,
     ),
     SampleCatalogItem(
         title = R.string.nanobanana_sample_list_title,
@@ -173,8 +135,6 @@ enum class SampleTags(
 ) {
     FIREBASE("Firebase", extendedColorScheme.firebase),
     GEMINI_FLASH("Gemini Flash", extendedColorScheme.geminiProFlash),
-    GEMINI_NANO("Gemini Nano", extendedColorScheme.geminiNano),
     IMAGEN("Imagen", extendedColorScheme.imagen),
     MEDIA3("Media3", extendedColorScheme.media3),
-    ML_KIT("ML Kit", extendedColorScheme.mLKit),
 }

@@ -62,7 +62,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.jetpacker.core.flags.FeatureFlags
-import com.google.mlkit.nl.translate.TranslateLanguage
 import java.time.Instant
 import java.util.Locale
 
@@ -280,6 +279,15 @@ fun FeatureToggle(name: String, initialValue: Boolean, onValueChange: (Boolean) 
 
 data class LanguageItem(val code: String, val displayName: String)
 
+/** Languages offered for the demo language setting (translation itself runs on a cloud model). */
+private val DEMO_LANGUAGE_CODES =
+  listOf(
+    "af", "ar", "be", "bg", "bn", "ca", "cs", "cy", "da", "de", "el", "en", "eo", "es", "et",
+    "fa", "fi", "fr", "ga", "gl", "gu", "he", "hi", "hr", "ht", "hu", "id", "is", "it", "ja",
+    "ka", "kn", "ko", "lt", "lv", "mk", "mr", "ms", "mt", "nl", "no", "pl", "pt", "ro", "ru",
+    "sk", "sl", "sq", "sv", "sw", "ta", "te", "th", "tl", "tr", "uk", "ur", "vi", "zh",
+  )
+
 @Composable
 fun LanguagePickerDialog(
   currentLanguageCode: String,
@@ -289,7 +297,7 @@ fun LanguagePickerDialog(
   var searchQuery by remember { mutableStateOf("") }
 
   val allLanguages = remember {
-    TranslateLanguage.getAllLanguages()
+    DEMO_LANGUAGE_CODES
       .map { code ->
         val displayName = Locale.forLanguageTag(code).getDisplayName(Locale.US)
         LanguageItem(code, displayName)

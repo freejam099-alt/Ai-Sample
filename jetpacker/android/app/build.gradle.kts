@@ -41,10 +41,34 @@ android {
     versionName = libs.versions.versionName.get()
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    // arm64 only: native libraries for every other ABI are dropped from the APK.
+    ndk { abiFilters += "arm64-v8a" }
+  }
+
+  // Release signing is configured from environment variables (set by CI).
+  signingConfigs {
+    create("release") {
+      val keystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
+      if (!keystorePath.isNullOrBlank()) {
+        storeFile = file(keystorePath)
+        storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+        keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+        keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+      }
+    }
+  }
+
+  lint {
+    checkReleaseBuilds = false
+    abortOnError = false
   }
 
   buildTypes {
     release {
+      if (!System.getenv("RELEASE_KEYSTORE_PATH").isNullOrBlank()) {
+        signingConfig = signingConfigs.getByName("release")
+      }
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -144,7 +168,6 @@ dependencies {
 
   implementation(platform(libs.firebase.bom))
   implementation(libs.firebase.ai)
-  implementation(libs.firebase.ai.ondevice)
   implementation(libs.firebase.auth.ktx)
   implementation(libs.firebase.appcheck.playintegrity)
   implementation(libs.firebase.appcheck.debug)

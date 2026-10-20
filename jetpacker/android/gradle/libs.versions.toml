@@ -19,7 +19,6 @@ coreSplashscreen = "1.2.0"
 datastoreCore = "1.1.7"
 espressoCore = "3.7.0"
 firebaseAi = "17.10.1"
-firebaseAiOndevice = "16.0.0-beta01"
 firebaseBom = "34.12.0"
 googleDevtoolsKsp = "2.3.5"
 googleServices = "4.4.1"
@@ -94,7 +93,6 @@ androidx-runner = { group = "androidx.test", name = "runner", version.ref = "run
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
 converter-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "converterMoshi" }
 firebase-ai = { group = "com.google.firebase", name = "firebase-ai", version.ref = "firebaseAi" }
-firebase-ai-ondevice = { group = "com.google.firebase", name = "firebase-ai-ondevice", version.ref = "firebaseAiOndevice" }
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
@@ -109,9 +107,6 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
-mlkit-genai-prompt = { group = "com.google.mlkit", name = "genai-prompt", version = "1.0.0-beta2" }
-mlkit-genai-speech = { group = "com.google.mlkit", name = "genai-speech-recognition", version = "1.0.0-alpha1" }
-mlkit-translate = { group = "com.google.mlkit", name = "translate", version = "17.0.3" }
 moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshiKotlin" }
 moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshiKotlinCodegen" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
@@ -119,7 +114,6 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "composeScreenshot" }
-mlkit-language-id = { group = "com.google.android.gms", name = "play-services-mlkit-language-id", version = "17.0.0" }
 firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
 firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug" }
 androidx-appfunctions = { group = "androidx.appfunctions", name = "appfunctions", version.ref = "appfunctions" }

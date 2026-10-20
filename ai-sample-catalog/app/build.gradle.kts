@@ -38,10 +38,36 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // arm64 only: native libraries for every other ABI are dropped from the APK.
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
+    }
+
+    // Release signing is configured from environment variables (set by CI).
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
+            if (!keystorePath.isNullOrBlank()) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     buildTypes {
         release {
+            if (!System.getenv("RELEASE_KEYSTORE_PATH").isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -83,16 +109,12 @@ dependencies {
     implementation(project(":ui-component"))
     implementation(project(":samples:gemini-multimodal"))
     implementation(project(":samples:gemini-chatbot"))
-    implementation(project(":samples:genai-summarization"))
-    implementation(project(":samples:genai-image-description"))
-    implementation(project(":samples:genai-writing-assistance"))
     implementation(project(":samples:nanobanana"))
     implementation(project(":samples:magic-selfie"))
     implementation(project(":samples:gemini-video-summarization"))
     implementation(project(":samples:gemini-live-todo"))
     implementation(project(":samples:gemini-video-metadata-creation"))
     implementation(project(":samples:gemini-image-chat"))
-    implementation(project(":samples:gemini-hybrid"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -29,19 +29,7 @@ import com.example.jetpacker.data.itinerary.MuseumDetail
 import com.example.jetpacker.data.itinerary.TimelineEvent
 import com.example.jetpacker.data.itinerary.TripSessionIdentifier
 import com.example.jetpacker.data.itinerary.VoiceNoteEntity
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.mlkit.genai.common.DownloadCallback
-import com.google.mlkit.genai.common.DownloadStatus
-import com.google.mlkit.genai.common.GenAiException
-import com.google.mlkit.genai.common.StreamingCallback
-import com.google.mlkit.genai.prompt.Caches
-import com.google.mlkit.genai.prompt.CountTokensResponse
-import com.google.mlkit.genai.prompt.GenerateContentRequest
-import com.google.mlkit.genai.prompt.GenerateContentResponse
-import com.google.mlkit.genai.prompt.GenerativeModel
-import java.util.concurrent.ExecutorService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -274,7 +262,7 @@ class VoiceNotesViewModelTest {
       )
 
     var callsCount = 0
-    val busyException = GenAiException(null, 9)
+    val busyException = IllegalStateException("503 model overloaded")
     val expectedRewriteJson =
       """
       {
@@ -289,26 +277,13 @@ class VoiceNotesViewModelTest {
     """
         .trimIndent()
 
-    val fakeModel = FakeGenerativeModel {
+    viewModel.generateTextForTesting = {
       callsCount++
       if (callsCount == 1) {
         throw busyException
       }
-      val candidateClass = Class.forName("com.google.mlkit.genai.prompt.Candidate")
-      val candidateCompanionField = candidateClass.getField("Companion")
-      val candidateCompanion = candidateCompanionField.get(null)
-      val createCandidateMethod = candidateCompanion.javaClass.getMethod("zza", String::class.java, java.lang.Integer::class.java)
-      val candidate = createCandidateMethod.invoke(candidateCompanion, expectedRewriteJson, 1)
-
-      val responseClass = Class.forName("com.google.mlkit.genai.prompt.GenerateContentResponse")
-      val responseCompanionField = responseClass.getField("Companion")
-      val responseCompanion = responseCompanionField.get(null)
-      val createResponseMethod = responseCompanion.javaClass.getMethod("zza", java.util.List::class.java)
-      val response = createResponseMethod.invoke(responseCompanion, listOf(candidate)) as GenerateContentResponse
-      response
+      expectedRewriteJson
     }
-
-    viewModel.generativeModelTesting = fakeModel
 
     // Start collecting to make StateFlow hot
     val collectJob = launch { viewModel.events.collect {} }
@@ -320,7 +295,7 @@ class VoiceNotesViewModelTest {
     )
     advanceUntilIdle()
 
-    assertEquals(2, callsCount) // 1st was BUSY, 2nd succeeded
+    assertEquals(2, callsCount) // 1st was overloaded, 2nd succeeded
     assertEquals("Clean Rewritten Voice Note", updatedEvent?.audioNotes?.firstOrNull())
     assertEquals(
       "Dirty raw voice note transcription. |||| Dirty raw voice note transcription.",
@@ -328,72 +303,5 @@ class VoiceNotesViewModelTest {
     )
 
     collectJob.cancel()
-  }
-
-  private class FakeGenerativeModel(
-    private val onGenerate: () -> GenerateContentResponse
-  ) : GenerativeModel {
-    override val caches: Caches
-      get() = TODO("Not implemented")
-
-    override suspend fun getBaseModelName(): String = TODO("Not implemented")
-
-    override suspend fun checkStatus(): Int = 3
-
-    override suspend fun isCachingFeatureAvailable(): Boolean = TODO("Not implemented")
-
-
-    override fun download():
-      Flow<DownloadStatus> =
-      TODO("Not implemented")
-
-    override fun downloadForFutures(
-      callback: DownloadCallback
-    ): ListenableFuture<Void> = TODO("Not implemented")
-
-    override suspend fun warmup() = TODO("Not implemented")
-
-    override fun warmupForFutures(): ListenableFuture<Void> =
-      TODO("Not implemented")
-
-    override suspend fun countTokens(
-      request: GenerateContentRequest
-    ): CountTokensResponse = TODO("Not implemented")
-
-
-    override fun countTokensForFutures(
-      request: GenerateContentRequest
-    ): ListenableFuture<
-      CountTokensResponse
-    > = TODO("Not implemented")
-
-    override suspend fun getTokenLimit(): Int = TODO("Not implemented")
-
-    override fun getTokenLimitForFutures():
-      ListenableFuture<Int> = TODO("Not implemented")
-
-    override suspend fun generateContent(
-      request: GenerateContentRequest
-    ): GenerateContentResponse = onGenerate()
-
-    override suspend fun generateContent(
-      request: GenerateContentRequest,
-      streamingCallback: StreamingCallback,
-    ): GenerateContentResponse = TODO("Not implemented")
-
-    override fun generateContentStream(
-      request: GenerateContentRequest
-    ): Flow<GenerateContentResponse> =
-      TODO("Not implemented")
-
-
-    override suspend fun clearImplicitCaches() = TODO("Not implemented")
-
-    override fun clearImplicitCachesForFutures():
-      ListenableFuture<Void> = TODO("Not implemented")
-
-    override fun close() {}
-
-    override fun getWorkerExecutor(): ExecutorService = TODO("Not implemented")
   }
 }

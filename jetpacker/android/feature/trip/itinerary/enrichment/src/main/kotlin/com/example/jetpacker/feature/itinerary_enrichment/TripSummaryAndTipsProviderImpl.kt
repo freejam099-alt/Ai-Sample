@@ -20,14 +20,12 @@ import android.util.Log
 import com.example.jetpacker.data.itinerary.TimelineEvent
 import com.example.jetpacker.data.itinerary.VoiceNoteEntity
 import com.example.jetpacker.data.trips.Trip
-import com.google.mlkit.genai.common.GenAiException
-import com.google.mlkit.genai.prompt.Generation
-import com.google.mlkit.genai.prompt.ModelPreference
-import com.google.mlkit.genai.prompt.ModelReleaseStage
-import com.google.mlkit.genai.prompt.generationConfig
-import com.google.mlkit.genai.prompt.modelConfig
+import com.google.firebase.Firebase
+import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.GenerativeBackend
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -37,60 +35,28 @@ private enum class TripStatus {
   UPCOMING,
 }
 
+/** Generates trip summaries and tips with a cloud Gemini model (Firebase AI Logic). */
 @Singleton
 class TripSummaryAndTipsProviderImpl @Inject constructor() : TripSummaryAndTipsProvider {
+
   private val generativeModel by lazy {
-    val previewFastConfig = generationConfig {
-      modelConfig = modelConfig {
-        releaseStage = ModelReleaseStage.PREVIEW
-        // Fast model is not good at if/else instructions for whether or not to generate 'phrases
-        // to learn' in prompt.
-        preference = ModelPreference.FAST
-      }
-    }
-    Generation.getClient(previewFastConfig)
+    Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel("gemini-3.5-flash-lite")
   }
 
-  override suspend fun isSupported(): Boolean {
-    return try {
-      val status = generativeModel.checkStatus()
-      status != 0 // 0 is UNAVAILABLE
-    } catch (e: GenAiException) {
-      if (e.errorCode == 606) {
-        Log.w("TripSummaryAndTips", "Feature 646 not found, disabling trip summary and tips.", e)
-        false
-      } else {
-        throw e
-      }
+  // Cloud models are reachable on every device, so the feature is always supported.
+  override suspend fun isSupported(): Boolean = true
+
+  private fun streamText(prompt: String): Flow<String> = flow {
+    try {
+      generativeModel.generateContentStream(prompt).collect { chunk -> emit(chunk.text ?: "") }
+    } catch (e: Exception) {
+      if (e is CancellationException) throw e
+      Log.e("TripSummaryAndTips", "Cloud generation stream failed", e)
+      throw e
     }
   }
 
-  override fun generateTripSummaryAndTips(events: List<TimelineEvent>, trip: Trip): Flow<String> = flow {
-    var status =
-      try {
-        generativeModel.checkStatus()
-      } catch (e: GenAiException) {
-        if (e.errorCode == 606) {
-          Log.w("TripSummaryAndTips", "Feature 646 not found in generateTripSummaryAndTips, disabling.", e)
-          emit("Trip summaries and tips are not available on this device.")
-          return@flow
-        } else {
-          throw e
-        }
-      }
-    if (status == 1) { // 1 is DOWNLOADABLE
-      Log.d("TripSummaryAndTips", "Model is downloadable. Triggering download...")
-      generativeModel.download().collect { Log.d("TripSummaryAndTips", "Downloading progress...") }
-      Log.d("TripSummaryAndTips", "Download flow completed. Re-checking status...")
-      status = generativeModel.checkStatus()
-    }
-
-    if (status != 3) { // 3 is AVAILABLE
-      Log.e("TripSummaryAndTips", "Model is not available (status: $status). Skipping trip summary and tips.")
-      emit("Model is downloading or unavailable. Please try again later.")
-      return@flow
-    }
-
+  override fun generateTripSummaryAndTips(events: List<TimelineEvent>, trip: Trip): Flow<String> {
     val prompt =
       "Given this itinerary for a trip: $events, " +
         "generate the following: " +
@@ -114,87 +80,25 @@ class TripSummaryAndTipsProviderImpl @Inject constructor() : TripSummaryAndTipsP
         promptWithShortPhrases
       }
 
-    try {
-      generativeModel.generateContentStream(selectedPrompt).collect { chunk ->
-        val textChunk = chunk.candidates.firstOrNull()?.text ?: ""
-        emit(textChunk)
-      }
-    } catch (e: Exception) {
-      Log.e("TripSummaryAndTips", "Generation stream failed", e)
-      throw e
-    }
+    return streamText(selectedPrompt)
   }
 
   override fun generateTripSummary(
     events: List<TimelineEvent>,
     trip: Trip,
     voiceNotes: List<VoiceNoteEntity>,
-  ): Flow<String> = flow {
-    var status =
-      try {
-        generativeModel.checkStatus()
-      } catch (e: GenAiException) {
-        if (e.errorCode == 606) {
-          emit("Trip summaries and tips are not available on this device.")
-          return@flow
-        } else {
-          throw e
-        }
-      }
-    if (status == 1) {
-      generativeModel.download().collect {}
-      status = generativeModel.checkStatus()
-    }
-    if (status != 3) {
-      emit("Model is downloading or unavailable. Please try again later.")
-      return@flow
-    }
-
+  ): Flow<String> {
     val prompt =
       "Given these voice notes for a trip: $voiceNotes, use a reminiscent tone to" +
         " generate a short 2 sentence summary of the highlights. Only return the summary."
-    try {
-      generativeModel.generateContentStream(prompt).collect { chunk ->
-        val textChunk = chunk.candidates.firstOrNull()?.text ?: ""
-        emit(textChunk)
-      }
-    } catch (e: Exception) {
-      throw e
-    }
+    return streamText(prompt)
   }
 
-  override fun generateUpcomingTip(events: List<TimelineEvent>, trip: Trip): Flow<String> = flow {
-    var status =
-      try {
-        generativeModel.checkStatus()
-      } catch (e: GenAiException) {
-        if (e.errorCode == 606) {
-          emit("Trip summaries and tips are not available on this device.")
-          return@flow
-        } else {
-          throw e
-        }
-      }
-    if (status == 1) {
-      generativeModel.download().collect {}
-      status = generativeModel.checkStatus()
-    }
-    if (status != 3) {
-      emit("Model is downloading or unavailable. Please try again later.")
-      return@flow
-    }
-
+  override fun generateUpcomingTip(events: List<TimelineEvent>, trip: Trip): Flow<String> {
     val prompt =
       "Given this itinerary for the upcoming events of a trip: $events, " +
         "generate 2 short tips. " +
         "return only the 2 short tips."
-    try {
-      generativeModel.generateContentStream(prompt).collect { chunk ->
-        val textChunk = chunk.candidates.firstOrNull()?.text ?: ""
-        emit(textChunk)
-      }
-    } catch (e: Exception) {
-      throw e
-    }
+    return streamText(prompt)
   }
 }

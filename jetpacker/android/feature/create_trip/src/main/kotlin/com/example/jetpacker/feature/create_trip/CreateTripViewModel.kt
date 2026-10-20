@@ -16,6 +16,9 @@
 
 package com.example.jetpacker.feature.create_trip
 
+import com.google.firebase.Firebase
+import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.GenerativeBackend
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
@@ -27,14 +30,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.jetpacker.core.flags.FeatureFlags
 import com.example.jetpacker.data.trips.Trip
 import com.example.jetpacker.data.trips.TripDao
-import com.google.mlkit.genai.common.FeatureStatus
-import com.google.mlkit.genai.prompt.Generation
-import com.google.mlkit.genai.prompt.ModelPreference
-import com.google.mlkit.genai.prompt.ModelReleaseStage
-import com.google.mlkit.genai.prompt.TextPart
-import com.google.mlkit.genai.prompt.generateContentRequest
-import com.google.mlkit.genai.prompt.generationConfig
-import com.google.mlkit.genai.prompt.modelConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -109,17 +104,11 @@ constructor(
   }
 
   private val generativeModel by lazy {
-    val previewFastConfig = generationConfig {
-      modelConfig = modelConfig {
-        releaseStage = ModelReleaseStage.PREVIEW
-        preference = ModelPreference.FAST
-      }
-    }
-    Generation.getClient(previewFastConfig)
+    Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel("gemini-3.5-flash-lite")
   }
 
   /**
-   * Processes the voice input text, extracts trip details using the on-device ML model,
+   * Processes the voice input text, extracts trip details using a cloud Gemini model,
    * and updates the corresponding fields in the UI state.
    *
    * @param text The transcribed text from the voice note.
@@ -129,23 +118,17 @@ constructor(
     _uiState.update { it.copy(isGenerating = true) }
     viewModelScope.launch {
       try {
-        val status = generativeModel.checkStatus()
-        if (status == FeatureStatus.AVAILABLE) {
-          val currentDateStr =
-            (FeatureFlags.OVERRIDE_CURRENT_TIME_MILLIS?.let {
-                Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
-              } ?: LocalDate.now())
-              .toString()
-          val prompt = getVoiceInputPrompt(text, currentDateStr)
+        val currentDateStr =
+          (FeatureFlags.OVERRIDE_CURRENT_TIME_MILLIS?.let {
+              Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+            } ?: LocalDate.now())
+            .toString()
+        val prompt = getVoiceInputPrompt(text, currentDateStr)
 
-          val request = generateContentRequest(TextPart(prompt)) {}
-          val response = generativeModel.generateContent(request)
-          val responseText = response.candidates.firstOrNull()?.text?.trim() ?: ""
+        val response = generativeModel.generateContent(prompt)
+        val responseText = response.text?.trim() ?: ""
 
-          parseAndApplyVoiceInput(responseText)
-        } else {
-          Log.e("CreateTripViewModel", "ML Kit model not available (status $status)")
-        }
+        parseAndApplyVoiceInput(responseText)
       } catch (e: Exception) {
         Log.e("CreateTripViewModel", "Error processing voice input", e)
       } finally {

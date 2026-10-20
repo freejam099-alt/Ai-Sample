@@ -25,11 +25,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
-import com.google.firebase.ai.InferenceMode
-import com.google.firebase.ai.OnDeviceConfig
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
-import com.google.firebase.ai.type.PublicPreviewAPI
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,13 +65,9 @@ class ReviewScreenViewModel @Inject constructor(savedStateHandle: SavedStateHand
     _generatedReviewText.value = newText
   }
 
-  @OptIn(PublicPreviewAPI::class)
   private val generativeModel =
     Firebase.ai(backend = GenerativeBackend.googleAI())
-      .generativeModel(
-        modelName = "gemini-3.5-flash-lite",
-        onDeviceConfig = OnDeviceConfig(mode = InferenceMode.PREFER_ON_DEVICE),
-      )
+      .generativeModel(modelName = "gemini-3.5-flash-lite")
 
   fun generateReview(placeName: String) {
     if (_selectedTopics.value.isEmpty()) return

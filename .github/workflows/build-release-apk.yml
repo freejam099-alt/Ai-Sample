@@ -1,0 +1,133 @@
+name: Build Release APK (arm64)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.app.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - { name: jetpacker, dir: jetpacker/android }
+          - { name: ai-sample-catalog, dir: ai-sample-catalog }
+    defaults:
+      run:
+        working-directory: ${{ matrix.app.dir }}
+    env:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4g
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK (accepts licenses)
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Prepare release keystore
+        env:
+          KS_B64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          KS="$RUNNER_TEMP/release.jks"
+          if [ -n "$KS_B64" ]; then
+            echo "Using keystore from repository secrets"
+            echo "$KS_B64" | base64 -d > "$KS"
+            STORE_PASS="$KS_PASS"; ALIAS="${KS_ALIAS:-release}"; KEYPASS="${KEY_PASS:-$KS_PASS}"
+          else
+            echo "No keystore secret set: generating a throwaway signing key for this build"
+            STORE_PASS="ci-release-pass"; ALIAS="release"; KEYPASS="$STORE_PASS"
+            keytool -genkeypair -keystore "$KS" -alias "$ALIAS" -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass "$STORE_PASS" -keypass "$KEYPASS" \
+              -dname "CN=CI Release, OU=CI, O=CI, C=ID"
+          fi
+          echo "::add-mask::$STORE_PASS"
+          echo "::add-mask::$KEYPASS"
+          {
+            echo "RELEASE_KEYSTORE_PATH=$KS"
+            echo "RELEASE_STORE_PASSWORD=$STORE_PASS"
+            echo "RELEASE_KEY_ALIAS=$ALIAS"
+            echo "RELEASE_KEY_PASSWORD=$KEYPASS"
+          } >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+
+      - name: Report build errors
+        if: failure()
+        run: |
+          MSG="$(grep -E "^e: |error:|What went wrong|Execution failed|FAILED|Could not|Unresolved|R8" -A2 "$GITHUB_WORKSPACE/build.log" | head -60)"
+          MSG="${MSG//'%'/'%25'}"; MSG="${MSG//$'\r'/'%0D'}"; MSG="${MSG//$'\n'/'%0A'}"
+          echo "::error title=Build failed (${{ matrix.app.name }})::$MSG"
+
+      - name: Collect arm64 APK
+        run: |
+          APK="$(find app/build/outputs/apk/release -name '*.apk' | head -1)"
+          test -n "$APK"
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          OUT="$GITHUB_WORKSPACE/dist/${{ matrix.app.name }}-arm64-v8a-release.apk"
+          cp "$APK" "$OUT"
+          echo "Native libraries in the APK:"
+          unzip -l "$OUT" | grep "lib/" || echo "  (none)"
+          if unzip -l "$OUT" | grep "lib/" | grep -vq "arm64-v8a"; then
+            echo "::error::Found a non-arm64 native library in the APK"
+            exit 1
+          fi
+          ls -la "$OUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app.name }}-arm64-v8a-release
+          path: dist/*.apk
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download APKs
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish release (browser download link)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: APK arm64 release #${{ github.run_number }}
+          body: |
+            Release APK (arm64-v8a only), built from ${{ github.sha }}.
+            Signed with the key from repository secrets, or a throwaway CI key if none is configured.
+          files: dist/*.apk
+          fail_on_unmatched_files: false

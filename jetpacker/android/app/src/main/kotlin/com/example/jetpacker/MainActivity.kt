@@ -33,6 +33,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.jetpacker.core.flags.FeatureFlags
 import com.example.jetpacker.core.ui.JetPackerTheme
 import com.example.jetpacker.ui.navigation.JetPackerNavGraph
@@ -44,6 +45,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    installSplashScreen()
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     handleFeatureFlags()

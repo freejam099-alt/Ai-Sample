@@ -17,6 +17,7 @@
 package com.example.jetpacker.feature.home
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jetpacker.core.speech.VoiceInputManager
@@ -29,6 +30,7 @@ import com.example.jetpacker.data.trips.TripDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,6 +104,19 @@ constructor(
 
   private fun prepopulateDatabase() {
     viewModelScope.launch {
+      try {
+        seedDatabase()
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Exception) {
+        Log.e("HomeViewModel", "Failed to prepopulate the database", e)
+        _uiState.update { current -> current.copy(isLoading = false) }
+      }
+    }
+  }
+
+  private suspend fun seedDatabase() {
+    run {
       tripDao.insertTrips(DummyData.trips)
       eventDao.insertEvents(DummyData.events)
       tourDetailDao.insertTourDetails(DummyData.tourDetails)

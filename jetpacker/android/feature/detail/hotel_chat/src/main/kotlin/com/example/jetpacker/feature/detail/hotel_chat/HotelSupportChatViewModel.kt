@@ -21,11 +21,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
-import com.google.firebase.ai.InferenceMode
-import com.google.firebase.ai.OnDeviceConfig
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
-import com.google.firebase.ai.type.PublicPreviewAPI
 import com.google.firebase.ai.type.content
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,8 +31,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
-import com.google.android.gms.tasks.Tasks
-import com.google.mlkit.nl.languageid.LanguageIdentification
 
 
 class HotelSupportChatViewModel(val hotelName: String = "Hotel", val language: String = "English") :
@@ -57,25 +52,10 @@ class HotelSupportChatViewModel(val hotelName: String = "Hotel", val language: S
     _selectedLanguage.value = language
   }
 
-  // ML Kit for Language Identification
-  private val languageIdentifier = LanguageIdentification.getClient()
-
-  // ML Kit / Gemini Nano for on-device translation
-  @OptIn(PublicPreviewAPI::class)
-  private val hybridTranslationModel =
+  // Cloud Gemini model used to translate chat messages.
+  private val translationModel =
     Firebase.ai(backend = GenerativeBackend.googleAI())
-      .generativeModel(
-        modelName = "gemini-3.6-flash",
-        onDeviceConfig = OnDeviceConfig(mode = InferenceMode.PREFER_ON_DEVICE),
-      )
-
-  // Cloud translator model (TranslateGemma fallback)
-  @OptIn(PublicPreviewAPI::class)
-  private val cloudTranslationModel =
-    Firebase.ai(backend = GenerativeBackend.googleAI())
-      .generativeModel(
-        modelName = "gemini-3.6-flash", // Represents cloud TranslateGemma
-      )
+      .generativeModel(modelName = "gemini-3.6-flash")
 
   // Firebase AI for chat
   private val generativeModel =
@@ -99,28 +79,11 @@ class HotelSupportChatViewModel(val hotelName: String = "Hotel", val language: S
         _translations.update { current -> current + (message.id to "\n\nTranslating...") }
         val lang = _selectedLanguage.value
 
-        // 1. Detect language using ML Kit Language Identification
-        val sourceLang = try {
-          Tasks.await(languageIdentifier.identifyLanguage(message.text))
-        } catch (e: Exception) {
-          "und"
-        }
-
-        // 2. Custom routing:
-        // We route to TranslateGemma in the Cloud for specific languages (e.g. French 'fr'),
-        // and run on-device Gemini Nano for others (e.g. English, Dutch, or unrecognized).
-        val routeToCloud = sourceLang == "fr"
-
         val prompt =
           "Translate the following text to $lang. Just return the translated sentence: ${message.text}."
 
-        val (translatedText, routePrefix) = if (routeToCloud) {
-          val result = cloudTranslationModel.generateContent(prompt)
-          result.text to "[Cloud / TranslateGemma]"
-        } else {
-          val result = hybridTranslationModel.generateContent(prompt)
-          result.text to "[On-Device / Gemini Nano]"
-        }
+        val translatedText = translationModel.generateContent(prompt).text
+        val routePrefix = "[Cloud / Gemini]"
 
         if (translatedText != null) {
           _translations.update { current ->
@@ -129,7 +92,7 @@ class HotelSupportChatViewModel(val hotelName: String = "Hotel", val language: S
         }
       } catch (e: Exception) {
         if (e is CancellationException) throw e
-        Log.e("HotelSupportChatViewModel", "Custom Hybrid Translation Error", e)
+        Log.e("HotelSupportChatViewModel", "Cloud translation error", e)
         _translations.update { current ->
           current + (message.id to "\n\nError: ${e.message}")
         }

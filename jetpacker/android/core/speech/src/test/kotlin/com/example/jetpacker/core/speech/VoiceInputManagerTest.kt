@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.example.jetpacker.core.speech
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.mlkit.genai.common.GenAiException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -43,40 +41,39 @@ class VoiceInputManagerTest {
   @Before
   fun setup() {
     Dispatchers.setMain(testDispatcher)
-    // We explicitly DO NOT initialize MlKitContext here.
-    // This simulates an environment where speech recognition services fail to bind,
-    // allowing us to verify the manager's robust initialization error handling.
+    // Constructing the manager must never touch Firebase or any on-device model.
     voiceInputManager = VoiceInputManager()
   }
 
   @Test
-  fun whenSpeechRecognizerIsNull_handleListenToggleSetsError() = runTest {
-    voiceInputManager.setPermissionGranted(true)
-    voiceInputManager.handleListenToggle(onPermissionRequired = {})
-    advanceUntilIdle()
-
+  fun initialState_isReadyAndIdle() {
     val state = voiceInputManager.uiState.value
+    assertTrue(state.isReady)
     assertFalse(state.isListening)
-    assertTrue(state.isError)
-    assertTrue(state.showDialog)
-    assertEquals("Speech recognizer could not be initialized.", state.statusText)
+    assertFalse(state.isError)
+    assertFalse(state.showDialog)
   }
 
   @Test
-  fun cancelListening_clearsErrorState() = runTest {
-    voiceInputManager.setPermissionGranted(true)
-    voiceInputManager.handleListenToggle(onPermissionRequired = {})
+  fun handleListenToggle_withoutPermission_requestsPermission() = runTest {
+    var permissionRequested = false
+    voiceInputManager.setPermissionGranted(false)
+    voiceInputManager.handleListenToggle(onPermissionRequired = { permissionRequested = true })
     advanceUntilIdle()
 
-    var state = voiceInputManager.uiState.value
-    assertTrue(state.isError)
+    assertTrue(permissionRequested)
+    assertFalse(voiceInputManager.uiState.value.isListening)
+  }
 
+  @Test
+  fun cancelListening_resetsToReadyState() = runTest {
     voiceInputManager.cancelListening()
-    state = voiceInputManager.uiState.value
+    val state = voiceInputManager.uiState.value
 
     assertFalse(state.isListening)
     assertFalse(state.isError)
     assertFalse(state.showDialog)
+    assertEquals("Ready", state.statusText)
   }
 
   @Test
@@ -87,31 +84,16 @@ class VoiceInputManagerTest {
         .getDeclaredMethod("getUserFriendlyErrorMessage", Throwable::class.java)
     method.isAccessible = true
 
-    val aiCoreException =
-      GenAiException(
-        "Speech recognition engine is closed due to internal error: ERROR_TYPE_AICORE_NOT_ENABLED_RUNTIME_LIMITS",
-        null,
-        0,
-      )
-    val mappedAiCore = method.invoke(voiceInputManager, aiCoreException) as String
-    assertEquals(
-      "AI Core speech engine runtime limits exceeded. Please wait a few moments and try again.",
-      mappedAiCore,
-    )
+    val network = method.invoke(voiceInputManager, Exception("NETWORK_ERROR")) as String
+    assertEquals("Network error. Please check your connection.", network)
 
-    val permissionException = Exception("PERMISSION_DENIED: missing RECORD_AUDIO")
-    val mappedPermission = method.invoke(voiceInputManager, permissionException) as String
-    assertEquals("Microphone permission is required for voice input.", mappedPermission)
+    val permission = method.invoke(voiceInputManager, SecurityException("permission denied")) as String
+    assertEquals("Microphone permission is required for voice input.", permission)
 
-    val networkException = Exception("timeout or NETWORK_ERROR during connect")
-    val mappedNetwork = method.invoke(voiceInputManager, networkException) as String
-    assertEquals("Network error. Please check your connection.", mappedNetwork)
+    val unknown = method.invoke(voiceInputManager, Exception("boom")) as String
+    assertEquals("Voice input failed: boom", unknown)
 
-    val genericException = Exception("Some unexpected issue")
-    val mappedGeneric = method.invoke(voiceInputManager, genericException) as String
-    assertEquals(
-      "Speech recognition engine was closed due to an internal error: Some unexpected issue",
-      mappedGeneric,
-    )
+    val none = method.invoke(voiceInputManager, null) as String
+    assertEquals("An unexpected error occurred.", none)
   }
 }

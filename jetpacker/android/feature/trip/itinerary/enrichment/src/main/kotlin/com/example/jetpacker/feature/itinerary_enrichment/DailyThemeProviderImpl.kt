@@ -16,16 +16,11 @@
 
 package com.example.jetpacker.feature.itinerary_enrichment
 
+import com.google.firebase.Firebase
+import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.GenerativeBackend
 import android.util.Log
 import com.example.jetpacker.data.itinerary.TimelineEvent
-import com.google.mlkit.genai.common.GenAiException
-import com.google.mlkit.genai.prompt.Generation
-import com.google.mlkit.genai.prompt.ModelPreference
-import com.google.mlkit.genai.prompt.ModelReleaseStage
-import com.google.mlkit.genai.prompt.TextPart
-import com.google.mlkit.genai.prompt.generateContentRequest
-import com.google.mlkit.genai.prompt.generationConfig
-import com.google.mlkit.genai.prompt.modelConfig
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
@@ -36,38 +31,10 @@ import org.json.JSONObject
 @Singleton
 class DailyThemeProviderImpl @Inject constructor() : DailyThemeProvider {
   private val generativeModel by lazy {
-    val previewFastConfig = generationConfig {
-      modelConfig = modelConfig {
-        releaseStage = ModelReleaseStage.PREVIEW
-        preference = ModelPreference.FAST
-      }
-    }
-    Generation.getClient(previewFastConfig)
+    Firebase.ai(backend = GenerativeBackend.googleAI()).generativeModel("gemini-3.5-flash-lite")
   }
 
   override suspend fun generateDailyThemes(events: List<TimelineEvent>): List<DayThemeItem> {
-    var status =
-      try {
-        generativeModel.checkStatus()
-      } catch (e: GenAiException) {
-        if (e.errorCode == 606) {
-          Log.w("DailyTheme", "Feature 646 not found in generateDailyThemes, disabling.", e)
-          return emptyList()
-        } else {
-          throw e
-        }
-      }
-    if (status == 1) { // 1 is DOWNLOADABLE
-      Log.d("DailyTheme", "Model is downloadable. Triggering download...")
-      generativeModel.download().collect { Log.d("DailyTheme", "Downloading progress...") }
-      status = generativeModel.checkStatus()
-    }
-
-    if (status != 3) { // 3 is AVAILABLE
-      Log.e("DailyTheme", "Model is not available (status: $status). Skipping theme generation.")
-      return emptyList()
-    }
-
     val prompt =
       """
         Generate a short theme (max 3 words) for each day of the trip.
@@ -88,15 +55,16 @@ class DailyThemeProviderImpl @Inject constructor() : DailyThemeProvider {
 
       while (retryCount < maxRetries) {
         try {
-          val request = generateContentRequest(TextPart(prompt)) {}
-          val response = generativeModel.generateContent(request)
-          responseText = response.candidates.firstOrNull()?.text ?: ""
+          val response = generativeModel.generateContent(prompt)
+          responseText = response.text ?: ""
           if (responseText.isNotEmpty()) break
         } catch (e: Exception) {
           if (e is kotlinx.coroutines.CancellationException) throw e
-          if (e.message?.contains("ErrorCode 9") == true || e.message?.contains("BUSY") == true) {
+          if (e.message?.contains("503") == true ||
+              e.message?.contains("overloaded", ignoreCase = true) == true ||
+              e.message?.contains("unavailable", ignoreCase = true) == true) {
             retryCount++
-            Log.w("DailyTheme", "AI Core is busy, retrying ($retryCount/$maxRetries)...")
+            Log.w("DailyTheme", "Cloud model is busy, retrying ($retryCount/$maxRetries)...")
             kotlinx.coroutines.delay(1000L * retryCount)
           } else {
             throw e
