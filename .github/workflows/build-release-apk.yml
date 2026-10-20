@@ -94,7 +94,12 @@ jobs:
       - name: Report build errors
         if: failure()
         run: |
-          MSG="$(grep -E "^e: |error:|What went wrong|Execution failed|FAILED|Could not|Unresolved|R8" -A2 "$GITHUB_WORKSPACE/build.log" | head -60)"
+          {
+            sed -n '/\* What went wrong:/,/\* Try:/p' "$GITHUB_WORKSPACE/build.log" | head -70
+            echo "-----"
+            grep -E "^e: " "$GITHUB_WORKSPACE/build.log" | head -20
+          } > "$RUNNER_TEMP/err.txt"
+          MSG="$(cat "$RUNNER_TEMP/err.txt")"
           MSG="${MSG//'%'/'%25'}"; MSG="${MSG//$'\r'/'%0D'}"; MSG="${MSG//$'\n'/'%0A'}"
           echo "::error title=Build failed (${{ matrix.app.name }})::$MSG"
 
